@@ -20,6 +20,7 @@ parser.add_argument('--model_checkpoint', type=str, required=True, help='model c
 parser.add_argument('--dataroot', type=str, required=True, help='train/test dataroot')
 parser.add_argument('--batch_size', type=int, default=256, help='batch size for train data')
 parser.add_argument('--output_csv', type=str, required=True, help='predict file')
+parser.add_argument('--resnet_type', type=int, default=18, help='which resnet to use')
 
 args = parser.parse_args()
 
@@ -38,9 +39,8 @@ target_dataset = ImageFolder(f'{args.dataroot}/test_data', transform=transform_t
 target_loader = DataLoader(target_dataset, batch_size=args.batch_size, shuffle=False)
 
 # models
-F = FeatureExtractor().to(device)
-C = LabelPredictor().to(device)
-D = DomainClassifier().to(device)
+F = FeatureExtractor(resnet=args.resnet_type).to(device)
+C = LabelPredictor(resnet=args.resnet_type).to(device)
 
 checkpoint = torch.load(args.model_checkpoint)
 F.load_state_dict(checkpoint['feature_extractor'])

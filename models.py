@@ -93,9 +93,14 @@ class Discriminator(nn.Module):
         return F.avg_pool2d(x, x.size()[2:]).view(x.size()[0], -1)
 
 class FeatureExtractor(nn.Module):
-    def __init__(self):
+    def __init__(self, resnet=18):
         super().__init__()
-        self.feature = models.resnet18(pretrained=False)
+        if resnet == 18:
+            self.feature = models.resnet18(pretrained=False)
+        elif resnet == 34:
+            self.feature = models.resnet34(pretrained=False)
+        elif resnet == 50:
+            self.feature = models.resnet50(pretrained=False)
         self.feature.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.feature = nn.Sequential(*list(self.feature.children())[:-1])
 
@@ -103,36 +108,42 @@ class FeatureExtractor(nn.Module):
         return self.feature(x).squeeze()
 
 class LabelPredictor(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, num_classes=10, resnet=18):
         super().__init__()
+        hidden_size = 512
+        if resnet >= 50:
+            hidden_size = 2048
         self.fc = nn.Sequential(
-            nn.Linear(512, 512),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 512),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 10)
+            nn.Linear(hidden_size, num_classes)
         )
 
     def forward(self, x):
         return self.fc(x)
 
 class DomainClassifier(nn.Module):
-    def __init__(self):
+    def __init__(self, resnet=18):
         super().__init__()
+        hidden_size = 512
+        if resnet >= 50:
+            hidden_size = 2048
         self.fc = nn.Sequential(
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(hidden_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(hidden_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(hidden_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(hidden_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 1)
+            nn.Linear(hidden_size, 1)
         )
 
     def forward(self, x):

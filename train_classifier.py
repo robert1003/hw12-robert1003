@@ -25,6 +25,7 @@ parser.add_argument('--target', type=str, required=True, help='target dataroot')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size for train data')
 parser.add_argument('--from_cycle', action='store_true', help='is data from cycle or not')
 parser.add_argument('--adaptive_lamb', action='store_true', help='use adaptive lamb')
+parser.add_argument('--resnet_type', type=int, default=18, help='which resnet to use')
 
 args = parser.parse_args()
 
@@ -83,9 +84,9 @@ source_loader = DataLoader(source_dataset, batch_size=args.batch_size, shuffle=T
 target_loader = DataLoader(target_dataset, batch_size=args.batch_size, shuffle=True)
 
 # models
-F = FeatureExtractor().to(device)
-C = LabelPredictor().to(device)
-D = DomainClassifier().to(device)
+F = FeatureExtractor(resnet=args.resnet_type).to(device)
+C = LabelPredictor(resnet=args.resnet_type).to(device)
+D = DomainClassifier(resnet=args.resnet_type).to(device)
 
 class_criterion = nn.CrossEntropyLoss()
 domain_criterion = nn.BCEWithLogitsLoss()
