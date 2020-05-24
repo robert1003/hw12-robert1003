@@ -40,6 +40,7 @@ logging.info(args)
 
 device = 'cuda' if args.use_gpu else 'cpu'
 if args.use_gpu:
+    os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 # load dataset
