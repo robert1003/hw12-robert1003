@@ -101,6 +101,10 @@ class FeatureExtractor(nn.Module):
             self.feature = models.resnet34(pretrained=False)
         elif resnet == 50:
             self.feature = models.resnet50(pretrained=False)
+        elif resnet == 101:
+            self.feature = models.resnet101(pretrained=False)
+        else:
+            raise NotImplementedError
         self.feature.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.feature = nn.Sequential(*list(self.feature.children())[:-1])
 
