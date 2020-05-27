@@ -92,9 +92,9 @@ D = DomainClassifier(resnet=args.resnet_type).to(device)
 class_criterion = nn.CrossEntropyLoss()
 domain_criterion = nn.BCEWithLogitsLoss()
 
-opt_F = optim.Adam(F.parameters())
-opt_C = optim.Adam(C.parameters())
-opt_D = optim.Adam(D.parameters())
+opt_F = optim.AdamW(F.parameters())
+opt_C = optim.AdamW(C.parameters())
+opt_D = optim.AdamW(D.parameters())
 
 # train
 F.train()
@@ -103,6 +103,7 @@ C.train()
 lamb, p, gamma, now, tot = 0, 0, 10, 0, len(source_loader) * args.n_epoch
 if not args.adaptive_lamb:
     lamb = 0.1
+best_domain_loss, best_epoch = 0, 0
 for epoch in range(args.n_epoch):
     domain_loss, class_loss = 0, 0
     total_hit, total_num = 0, 0
@@ -148,14 +149,20 @@ for epoch in range(args.n_epoch):
             now += 1
 
         print('Epoch {}/{} Iter {}/{} lamb {:.5f} domain_loss {:.5f} class_loss {:.5f} accuracy {:.5f}'.format(
-                epoch, args.n_epoch, i + 1, len(source_loader), lamb, loss1, loss2, hit / num), end='\r')
+                epoch + 1, args.n_epoch, i + 1, len(source_loader), lamb, loss1, loss2, hit / num), end='\r')
 
     print('')
     logging.info('Epoch {}/{} domain_loss {:.5f} class_loss {:.5f} accuracy {:.5f}'.format(
-            epoch, args.n_epoch, domain_loss / (i + 1), class_loss / (i + 1), total_hit / total_num))
+            epoch + 1, args.n_epoch, domain_loss / (i + 1), class_loss / (i + 1), total_hit / total_num))
 
-    # save model
-    torch.save({
-        'feature_extractor': F.state_dict(),
-        'label_predictor': C.state_dict()
-    }, args.model_name)
+    if total_hit / total_num > 0.98 and domain_loss / (i + 1) > best_domain_loss:
+        print('best_domain_loss: {:.5f} -> {:.5f}'.format(best_domain_loss, domain_loss / (i + 1)))
+        best_domain_loss = domain_loss / (i + 1)
+        best_epoch = epoch + 1
+        # save model
+        torch.save({
+            'feature_extractor': F.state_dict(),
+            'label_predictor': C.state_dict()
+        }, args.model_name)
+
+logging.info('best_domain_loss: {:.5f} at epoch {}'.format(best_domain_loss, best_epoch))
