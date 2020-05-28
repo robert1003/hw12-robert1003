@@ -23,6 +23,7 @@ parser.add_argument('--dataroot', type=str, required=True, help='train/test data
 parser.add_argument('--batch_size', type=int, default=256, help='batch size for train data')
 parser.add_argument('--output_csv', type=str, required=True, help='predict file')
 parser.add_argument('--resnet_type', type=int, nargs='+', required=True, help='which resnet to use')
+parser.add_argument('--num_thread', type=int, default=4, help='parallel threads')
 
 args = parser.parse_args()
 
@@ -70,7 +71,7 @@ def get_prediction(model_checkpoint, resnet_type):
     return np.concatenate(result)
 
 # predict
-with parallel_backend('loky', n_jobs=len(args.resnet_type)):
+with parallel_backend('loky', n_jobs=args.num_thread):
     results = np.array(
         Parallel()(delayed(get_prediction)(a, b) for a, b in zip(args.model_checkpoint, args.resnet_type))
     ).transpose()
